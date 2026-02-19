@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Sensor Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sensor-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .sensor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .status-online {
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { background-color: #10b981; }
+            51%, 100% { background-color: #059669; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-microchip text-2xl"></i>
+                        <h1 class="text-2xl font-bold">IoT Sensor Dashboard</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <div id="statusIndicator" class="w-3 h-3 bg-green-500 rounded-full status-online"></div>
+                            <span class="text-sm">Live</span>
+                        </div>
+                        <div class="text-sm">
+                            <span id="currentTime"></span>
+                        </div>
+                        <a href="/mobile" class="bg-white text-blue-600 px-3 py-1 rounded-full text-sm font-semibold hover:bg-gray-100 transition">
+                            <i class="fas fa-mobile-alt mr-1"></i> Mobile View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
+                <div class="sensor-card bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-orange-100 p-3 rounded-lg">
+                                <i class="fas fa-temperature-high text-orange-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-700">Temperature</h3>
+                        </div>
+                        <span class="pulse text-green-500 text-xs">●</span>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800">
+                        <span id="temperature-value">--</span>
+                        <span class="text-lg text-gray-500">°C</span>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500" id="temperature-time">--</div>
+                </div>
+
+                <div class="sensor-card bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-blue-100 p-3 rounded-lg">
+                                <i class="fas fa-tint text-blue-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-700">Humidity</h3>
+                        </div>
+                        <span class="pulse text-green-500 text-xs">●</span>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800">
+                        <span id="humidity-value">--</span>
+                        <span class="text-lg text-gray-500">%</span>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500" id="humidity-time">--</div>
+                </div>
+
+                <div class="sensor-card bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-purple-100 p-3 rounded-lg">
+                                <i class="fas fa-compress-arrows-alt text-purple-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-700">Pressure</h3>
+                        </div>
+                        <span class="pulse text-green-500 text-xs">●</span>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800">
+                        <span id="pressure-value">--</span>
+                        <span class="text-lg text-gray-500">hPa</span>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500" id="pressure-time">--</div>
+                </div>
+
+                <div class="sensor-card bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-red-100 p-3 rounded-lg">
+                                <i class="fas fa-smog text-red-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-700">Carbon Monoxide</h3>
+                        </div>
+                        <span class="pulse text-green-500 text-xs">●</span>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800">
+                        <span id="carbonMonoxide-value">--</span>
+                        <span class="text-lg text-gray-500">ppm</span>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500" id="carbonMonoxide-time">--</div>
+                </div>
+
+                <div class="sensor-card bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-indigo-100 p-3 rounded-lg">
+                                <i class="fas fa-wind text-indigo-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-700">Nitrogen Dioxide</h3>
+                        </div>
+                        <span class="pulse text-green-500 text-xs">●</span>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800">
+                        <span id="nitrogenDioxide-value">--</span>
+                        <span class="text-lg text-gray-500">ppb</span>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500" id="nitrogenDioxide-time">--</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-lg p-4">
+                    <h2 class="text-lg font-bold text-gray-800 mb-3">
+                        <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+                        Real-time Trends
+                    </h2>
+                    <div class="h-48">
+                        <canvas id="trendsChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-4">
+                    <h2 class="text-lg font-bold text-gray-800 mb-3">
+                        <i class="fas fa-chart-pie mr-2 text-purple-600"></i>
+                        Current Status
+                    </h2>
+                    <div class="h-48">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-history mr-2 text-green-600"></i>
+                    Recent Activity Log
+                </h2>
+                <div id="activityLog" class="space-y-2 max-h-64 overflow-y-auto">
+                    <div class="text-gray-500 text-sm">Waiting for sensor data...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
